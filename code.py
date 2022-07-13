@@ -1,15 +1,4 @@
-# SPDX-FileCopyrightText: 2021 Phillip Burgess for Adafruit Industries
-#
-# SPDX-License-Identifier: MIT
-
-"""
-A macro/hotkey program for Adafruit MACROPAD. Macro setups are stored in the
-/macros folder (configurable below), load up just the ones you're likely to
-use. Plug into computer's USB port, use dial to select an application macro
-set, press MACROPAD keys to send key sequences and other USB protocols.
-"""
-
-# pylint: disable=import-error, unused-import, too-few-public-methods
+# Mathe Exercises for Adafruit Macroboard
 
 import os
 import random
