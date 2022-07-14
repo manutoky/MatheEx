@@ -1,13 +1,16 @@
 # Mathe Exercises for Adafruit Macroboard
 
+
 import os
 import random
 import time
 import displayio
 import terminalio
+import adafruit_imageload
 from adafruit_display_shapes.rect import Rect
 from adafruit_display_text import label
 from adafruit_macropad import MacroPad
+from rainbowio import colorwheel
 
 
 # CONFIGURABLES ------------------------
@@ -26,25 +29,32 @@ class Aufgabe:
     def __init__(self, type) -> None:
         self.type_ = type
         if type == 0: # plus
-            self.typestr_ = 'Addiere!'
-            self.val1_ = random.randrange(0,99)
-            self.val2_ = random.randrange(0,min(100-self.val1_,10))
-            self.result_ = self.val1_ + self.val2_
-        elif type == 1:# minus
-            self.typestr_ = 'Ziehe ab!'
-            self.val1_ = random.randrange(0,10)
-            self.val2_ = random.randrange(0,10)
-            self.result_ = self.val1_ + self.val2_
+            self.typestr_   = 'Addiere!'
+            self.symbol_    = '+'
+            self.val1_      = random.randrange(0,99)
+            self.val2_      = random.randrange(1,min(100-self.val1_,10))
+            self.result_    = self.val1_ + self.val2_
+        elif type == 1: # minus
+            self.typestr_   = 'Ziehe ab!'
+            self.symbol_    = '-'
+            self.val1_      = random.randrange(1,101)
+            self.val2_      = random.randrange(1,min(self.val1_,101))
+            self.result_    = self.val1_ - self.val2_
         elif type == 2: # multiplizieren
-            self.typestr_ = 'Multipliziere!'
-            self.val1_ = random.randrange(0,10)
-            self.val2_ = random.randrange(0,10)
-            self.result_ = self.val1_ + self.val2_
+            self.typestr_   = 'Multipliziere!'
+            self.symbol_    = '*'
+            self.val1_      = random.randrange(0,10)
+            self.val2_      = random.randrange(0,10)
+            self.result_    = self.val1_ * self.val2_
         elif type == 3: # dividieren
-            self.typestr_ = 'Dividiere!'
-            self.val1_ = random.randrange(0,10)
-            self.val2_ = random.randrange(0,10)
-            self.result_ = self.val1_ + self.val2_
+            self.typestr_   = 'Dividiere!'
+            self.symbol_    = '/'
+            divisor         = random.randrange(1,10)
+            quotient        = random.randrange(1,10)
+            dividend        = divisor * quotient
+            self.val1_      = dividend
+            self.val2_      = divisor
+            self.result_    = quotient
         else:
             pass
 
@@ -56,13 +66,15 @@ class Menu:
         self.menugroup_.append(label.Label(terminalio.FONT, text='Mathe für Sam', color=0x000000,
                             anchored_position=(self.macropad_.display.width//2, -2),
                             anchor_point=(0.5, 0.0)))
-        self.menugroup_.append(Rect(0, self.macropad_.display.height-12, 40, 12, fill=0xFFFFFF))  
-        self.menugroup_.append(label.Label(terminalio.FONT, text='Start', color=0x000000,
-                            anchored_position=(5, self.macropad_.display.height),
-                            anchor_point=(0.0, 1.0))) 
+        #self.menugroup_.append(Rect(0, self.macropad_.display.height-12, 40, 12, fill=0xFFFFFF))  
+        #self.menugroup_.append(label.Label(terminalio.FONT, text='Start', color=0x000000,
+        #                    anchored_position=(5, self.macropad_.display.height),
+        #                    anchor_point=(0.0, 1.0))) 
 
     def showMenu(self):
         self.macropad_.display.show(self.menugroup_)
+        for i in range(12):
+            macropad.pixels[i] = 0
 
 class Run:
     def __init__(self, macropad) -> None:
@@ -77,10 +89,14 @@ class Run:
             anchored_position=(self.macropad_.display.width//2, self.macropad_.display.height//2),
             anchor_point=(0.5, 1.0))
         self.rungroup_.append(self.countdown_)
-        self.rungroup_.append(Rect(self.macropad_.display.width-45, self.macropad_.display.height-12, 40, 12, fill=0xFFFFFF))  
-        self.rungroup_.append(label.Label(terminalio.FONT, text='Fertig', color=0x000000,
-                                anchored_position=(self.macropad_.display.width-5, self.macropad_.display.height),
-                                anchor_point=(1.0, 1.0)))      
+        self.rungroup_.append(group)
+        group.x = 0
+        group.y = self.macropad_.display.height-16
+        sprite[0] = 0
+        #self.rungroup_.append(Rect(self.macropad_.display.width-45, self.macropad_.display.height-12, 40, 12, fill=0xFFFFFF))  
+        #self.rungroup_.append(label.Label(terminalio.FONT, text='Fertig', color=0x000000,
+        #                        anchored_position=(self.macropad_.display.width-5, self.macropad_.display.height),
+        #                        anchor_point=(1.0, 1.0)))      
       
 
     def startRunCountdown(self):    
@@ -90,10 +106,10 @@ class Run:
         self.macropad_.display.show(self.rungroup_)
     
     def erstelleAufgabe(self):
-        self.aufgabentyp = 0 #random.randrange(0,3)
+        self.aufgabentyp = random.randrange(0,4)
         self.aufgabe = Aufgabe(self.aufgabentyp)
         self.runlabel_.text = self.aufgabe.typestr_
-        self.countdown_.text = str(self.aufgabe.val1_)+'+'+str(self.aufgabe.val2_)+'='
+        self.countdown_.text = str(self.aufgabe.val1_)+self.aufgabe.symbol_+str(self.aufgabe.val2_)+'='
         self.inputval_ = []
         self.runstate_ = 'INPUT'
 
@@ -113,6 +129,7 @@ class Run:
             self.countdown_.text = ' '*3
             self.erstelleAufgabe()
             self.macropad_.display.show(self.rungroup_)
+            group.x = min(group.x+random.randrange(1,20),self.macropad_.display.width)
         if self.runstate_ == 'WRONG':
             self.countdown_.text = 'FALSCH!'
             self.macropad_.display.show(self.rungroup_)
@@ -120,6 +137,7 @@ class Run:
             self.countdown_.text = ' '*3
             self.erstelleAufgabe()
             self.macropad_.display.show(self.rungroup_)
+            group.x = max(group.x-random.randrange(1,5),0)
         if self.runstate_ == 'INPUT':
             if keyev and keyev.pressed:
                 #print(self.runstate_)
@@ -132,9 +150,11 @@ class Run:
                 elif knum == 10: # null
                     if self.inputval_:
                         self.inputval_ = self.inputval_*10
+                    else:
+                        self.inputval_ = 0
                 elif knum == KEY_CORRECT:
                     self.inputval_ = ''
-                self.countdown_.text = str(self.aufgabe.val1_)+'+'+str(self.aufgabe.val2_)+'='+str(self.inputval_)
+                self.countdown_.text = str(self.aufgabe.val1_)+self.aufgabe.symbol_+str(self.aufgabe.val2_)+'='+str(self.inputval_)
                 if knum == KEY_ENTER:
                     #print(str(self.inputval_)+'|'+str(self.aufgabe.result_))
                     if self.inputval_ == self.aufgabe.result_:
@@ -151,6 +171,18 @@ class Run:
 # INITIALIZATION -----------------------
 
 macropad = MacroPad()
+sprite_sheet, palette = adafruit_imageload.load("/cp_sprite_sheet.bmp",
+                                                bitmap=displayio.Bitmap,
+                                                palette=displayio.Palette)
+
+sprite = displayio.TileGrid(sprite_sheet, pixel_shader=palette,
+                            width = 1,
+                            height = 1,
+                            tile_width = 16,
+                            tile_height = 16)
+group = displayio.Group(scale=1)
+group.append(sprite)
+
 menuinst = Menu(macropad)
 runinst = Run(macropad)
 
@@ -167,12 +199,16 @@ while True:
     key_event = macropad.keys.events.get()
     if state_ == 'MENU':
         if key_event and key_event.pressed:
-            if key_event.key_number == KEY_START:
+            #if key_event.key_number == KEY_START:
                 runinst.startRunCountdown()
                 state_ = 'RUN'
     elif state_ == 'RUN':
         runinst.StateMachine(key_event)
-    elif state_ == 'FINISHED_FAIL':
-        pass
-    elif state_ == 'FINISHED_PASS':
-        pass
+    if group.x > macropad.display.width-17:
+        for i in range(12):
+            macropad.pixels[i] = colorwheel(int(255/12)*i)
+        macropad.play_file('happy.mp3')
+        time.sleep(1)
+        group.x = 0
+        state_ == 'MENU'
+        menuinst.showMenu()
